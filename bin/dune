@@ -1,0 +1,4 @@
+(executable
+ (public_name gpath)
+ (name main)
+ (libraries gpath))
