@@ -1,1 +1,3 @@
-let () = print_endline "Hello, World!"
+open Gpath
+
+let () = Pbf_parser.parse "gent.osm.pbf"
