@@ -13,18 +13,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Parse(filename string) error {
-	file, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
+func parseBlock(file *os.File) error {
 	// 1. Read the 4-byte big-endian length of the BlobHeader
 	var headerLen uint32
 	if err := binary.Read(file, binary.BigEndian, &headerLen); err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("file is empty")
+			return io.EOF
 		}
 		return fmt.Errorf("failed to read BlobHeader length: %w", err)
 	}
@@ -78,6 +72,28 @@ func Parse(filename string) error {
 		fmt.Printf("OSM HeaderBlock parsed successfully!\nRequired Features: %v\n", headerBlock.GetRequiredFeatures())
 	} else {
 		fmt.Printf("First block type is %s (expected OSMHeader)\n", blobHeader.GetType())
+	}
+
+	fmt.Println(blobHeader.GetIndexdata(), blobHeader.GetDatasize())
+
+	return nil
+}
+
+func Parse(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	for {
+		err = parseBlock(file)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
 	}
 
 	return nil
