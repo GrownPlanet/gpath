@@ -13,15 +13,15 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func getBlobHeader(file *os.File, headerLen uint32) (pbf.BlobHeader, error) {
-	var blobHeader pbf.BlobHeader
+func getBlobHeader(file *os.File, headerLen uint32) (*pbf.BlobHeader, error) {
+	blobHeader := &pbf.BlobHeader{}
 
 	blobHeaderBuf := make([]byte, headerLen)
 	if _, err := io.ReadFull(file, blobHeaderBuf); err != nil {
 		return blobHeader, fmt.Errorf("failed to read BlobHeader bytes: %w", err)
 	}
 
-	if err := proto.Unmarshal(blobHeaderBuf, &blobHeader); err != nil {
+	if err := proto.Unmarshal(blobHeaderBuf, blobHeader); err != nil {
 		return blobHeader, fmt.Errorf("failed to unmarshal BlobHeader: %w", err)
 	}
 
@@ -76,7 +76,7 @@ func parseBlock(file *os.File) error {
 		return err
 	}
 
-	rawData, err := getRawData(file, &blobHeader)
+	rawData, err := getRawData(file, blobHeader)
 	if err != nil {
 		return err
 	}
