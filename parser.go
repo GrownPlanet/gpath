@@ -61,6 +61,42 @@ func getRawData(file *os.File, blobHeader *pbf.BlobHeader) ([]byte, error) {
 	return rawData, nil
 }
 
+func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock) {
+	primitiveGroup := primitiveBlock.GetPrimitivegroup()[0]
+	// ways and dense
+	dense := primitiveGroup.GetDense()
+
+	gran := primitiveBlock.GetGranularity()
+	latOffset := primitiveBlock.GetLatOffset()
+	lonOffset := primitiveBlock.GetLonOffset()
+
+	var lastId int64
+	var lastLat int64
+	var lastLon int64
+
+	if dense != nil {
+		for i := 0; i < len(dense.GetId()); i++ {
+			lastId += dense.GetId()[i]
+			lastLat += dense.GetLat()[i]
+			lastLon += dense.GetLon()[i]
+
+			lat := 1e-9 * float64(latOffset+(int64(gran) * lastLat))
+			lon := 1e-9 * float64(lonOffset+(int64(gran) * lastLon))
+			_, _ = lat, lon
+			// fmt.Println(i, lastId, lat, lon)
+		}
+	} else {
+		for _, way := range primitiveGroup.GetWays()  {
+			keys := way.GetKeys()
+			vals := way.GetVals()
+			for i := 0; i < len(keys); i++ {
+				keyStr := string(primitiveBlock.GetStringtable().GetS()[keys[i]])
+				valStr := string(primitiveBlock.GetStringtable().GetS()[vals[i]])
+				// fmt.Println(keyStr, valStr)
+			}
+		}
+	}
+}
 
 func parseBlock(file *os.File) error {
 	var headerLen uint32
@@ -94,11 +130,10 @@ func parseBlock(file *os.File) error {
 		if err := proto.Unmarshal(rawData, &primitiveBlock); err != nil {
 			return fmt.Errorf("failed to unmarshal PrimitiveBlockBlock: %w", err)
 		}
-		fmt.Println(primitiveBlock.String())
+		parsePrimitiveBlock(&primitiveBlock)
 	} else {
 		return fmt.Errorf("unknown blobHeader type: %s", headerType)
 	}
-	fmt.Println(blobHeader.GetIndexdata(), blobHeader.GetDatasize())
 
 	return nil
 }
