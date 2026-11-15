@@ -6,12 +6,92 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 	"os"
+	"slices"
 
 	"gpath/pbf"
 
 	"google.golang.org/protobuf/proto"
 )
+
+var walkable = []string{
+	"footway", "path", "pedestrian", "steps", "residential", "living_street",
+	"service", "track", "unclassified", "tertiary", "secondary", "primary",
+	"cycleway", "tertiary_link", "secondary_link", "primary_link",
+}
+
+func isWalkable(tags map[string]string) bool {
+	if !slices.Contains(walkable, tags["highway"]) {
+		return false
+	}
+
+	if tags["foot"] == "no" ||
+		tags["access"] == "no" ||
+		tags["access"] == "private" {
+		return false
+	}
+
+	return true
+}
+
+func haversineDistance(a, b Node) float64 {
+	const R = 6371000.0
+	rad := math.Pi / 180
+	p1, p2 := a.Lat*rad, b.Lat*rad
+	dp, dl := (b.Lat-a.Lat)*rad, (b.Lon-a.Lon)*rad
+	h := math.Sin(dp/2)*math.Sin(dp/2) +
+		math.Cos(p1)*math.Cos(p2)*math.Sin(dl/2)*math.Sin(dl/2)
+	return 2 * R * math.Asin(math.Sqrt(h))
+}
+
+func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, graph *Graph) {
+	gran := int64(primitiveBlock.GetGranularity())
+	latOffset := primitiveBlock.GetLatOffset()
+	lonOffset := primitiveBlock.GetLonOffset()
+	stringTable := primitiveBlock.GetStringtable().GetS()
+
+	for _, group := range primitiveBlock.GetPrimitivegroup() {
+		if dense := group.GetDense(); dense != nil {
+			var id, lat, lon int64
+			for i := 0; i < len(dense.GetId()); i++ {
+				id += dense.GetId()[i]
+				lat += dense.GetLat()[i]
+				lon += dense.GetLon()[i]
+
+				graph.Nodes[id] = Node{
+					Lat: 1e-9 * float64(latOffset+(int64(gran)*lat)),
+					Lon: 1e-9 * float64(lonOffset+(int64(gran)*lon)),
+				}
+			}
+		}
+
+		for _, way := range group.GetWays() {
+			tags := make(map[string]string, len(way.GetKeys()))
+			for i, k := range way.GetKeys() {
+				tags[string(stringTable[k])] = string(stringTable[way.GetVals()[i]])
+			}
+			if !isWalkable(tags) {
+				continue
+			}
+
+			var ref, prev int64
+			for i, delta := range way.GetRefs() {
+				ref += delta
+				if i > 0 {
+					a, okA := graph.Nodes[prev]
+					b, okB := graph.Nodes[ref]
+					if okA && okB {
+						d := haversineDistance(a, b)
+						graph.Edges[prev] = append(graph.Edges[prev], Edge{ref, d})
+						graph.Edges[ref] = append(graph.Edges[ref], Edge{prev, d})
+					}
+				}
+				prev = ref
+			}
+		}
+	}
+}
 
 func getBlobHeader(file *os.File, headerLen uint32) (*pbf.BlobHeader, error) {
 	blobHeader := &pbf.BlobHeader{}
@@ -27,7 +107,6 @@ func getBlobHeader(file *os.File, headerLen uint32) (*pbf.BlobHeader, error) {
 
 	return blobHeader, nil
 }
-
 
 func getRawData(file *os.File, blobHeader *pbf.BlobHeader) ([]byte, error) {
 	var rawData []byte
@@ -61,44 +140,7 @@ func getRawData(file *os.File, blobHeader *pbf.BlobHeader) ([]byte, error) {
 	return rawData, nil
 }
 
-func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock) {
-	primitiveGroup := primitiveBlock.GetPrimitivegroup()[0]
-	// ways and dense
-	dense := primitiveGroup.GetDense()
-
-	gran := primitiveBlock.GetGranularity()
-	latOffset := primitiveBlock.GetLatOffset()
-	lonOffset := primitiveBlock.GetLonOffset()
-
-	var lastId int64
-	var lastLat int64
-	var lastLon int64
-
-	if dense != nil {
-		for i := 0; i < len(dense.GetId()); i++ {
-			lastId += dense.GetId()[i]
-			lastLat += dense.GetLat()[i]
-			lastLon += dense.GetLon()[i]
-
-			lat := 1e-9 * float64(latOffset+(int64(gran) * lastLat))
-			lon := 1e-9 * float64(lonOffset+(int64(gran) * lastLon))
-			_, _ = lat, lon
-			// fmt.Println(i, lastId, lat, lon)
-		}
-	} else {
-		for _, way := range primitiveGroup.GetWays()  {
-			keys := way.GetKeys()
-			vals := way.GetVals()
-			for i := 0; i < len(keys); i++ {
-				keyStr := string(primitiveBlock.GetStringtable().GetS()[keys[i]])
-				valStr := string(primitiveBlock.GetStringtable().GetS()[vals[i]])
-				// fmt.Println(keyStr, valStr)
-			}
-		}
-	}
-}
-
-func parseBlock(file *os.File) error {
+func parseBlock(file *os.File, graph *Graph) error {
 	var headerLen uint32
 	if err := binary.Read(file, binary.BigEndian, &headerLen); err != nil {
 		if err == io.EOF {
@@ -117,43 +159,38 @@ func parseBlock(file *os.File) error {
 		return err
 	}
 
-	headerType := blobHeader.GetType();
-	fmt.Println(headerType)
-	if headerType == "OSMHeader" {
-		var headerBlock pbf.HeaderBlock
-		if err := proto.Unmarshal(rawData, &headerBlock); err != nil {
-			return fmt.Errorf("failed to unmarshal HeaderBlock: %w", err)
-		}
-		fmt.Printf("OSM HeaderBlock parsed successfully!\nRequired Features: %v\n", headerBlock.GetRequiredFeatures())
-	} else if headerType == "OSMData" {
+	headerType := blobHeader.GetType()
+	if headerType == "OSMData" {
 		var primitiveBlock pbf.PrimitiveBlock
 		if err := proto.Unmarshal(rawData, &primitiveBlock); err != nil {
 			return fmt.Errorf("failed to unmarshal PrimitiveBlockBlock: %w", err)
 		}
-		parsePrimitiveBlock(&primitiveBlock)
-	} else {
+		parsePrimitiveBlock(&primitiveBlock, graph)
+	} else if headerType != "OSMHeader" {
 		return fmt.Errorf("unknown blobHeader type: %s", headerType)
 	}
 
 	return nil
 }
 
-func Parse(filename string) error {
+func Parse(filename string) (*Graph, error) {
+	graph := NewGraph()
+
 	file, err := os.Open(filename)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+		return graph, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
 	for {
-		err = parseBlock(file)
+		err = parseBlock(file, graph)
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return err
+			return graph, err
 		}
 	}
 
-	return nil
+	return graph, nil
 }

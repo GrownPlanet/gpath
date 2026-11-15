@@ -6,9 +6,11 @@ import (
 )
 
 func main() {
-	if err := Parse("gent.osm.pbf"); err != nil {
+	graph, err := Parse("gent.osm.pbf")
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Done parsing map file")
+	graph.Print()
+	fmt.Println("Turned map into graph")
 }
