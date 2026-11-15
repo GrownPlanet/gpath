@@ -11,6 +11,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		os.Exit(1)
 	}
-	graph.Print()
 	fmt.Println("Turned map into graph")
+	fmt.Println(len(graph.Nodes), graph.nearestTo(Node{Lat: 50.951123900000005, Lon: 3.4592488000000003}))
 }
