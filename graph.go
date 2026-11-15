@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -31,7 +30,7 @@ func haversineDistance(a, b Node) float64 {
 	return 2 * R * math.Asin(math.Sqrt(h))
 }
 
-// TODO: make this a KD-tree
+// TODO: make this a KD-tree for final implementation
 func (graph *Graph) nearestTo(to Node) int64 {
 	var nearestId int64
 	dist := math.Inf(1)
