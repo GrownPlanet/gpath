@@ -71,7 +71,7 @@ func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, graph *Graph) {
 					a, okA := graph.Nodes[prev]
 					b, okB := graph.Nodes[ref]
 					if okA && okB {
-						d := haversineDistance(a, b)
+						d := HaversineDistance(a, b)
 						graph.Edges[prev] = append(graph.Edges[prev], Edge{ref, d})
 						graph.Edges[ref] = append(graph.Edges[ref], Edge{prev, d})
 					}
@@ -162,7 +162,7 @@ func parseBlock(file *os.File, graph *Graph) error {
 	return nil
 }
 
-func Parse(filename string) (*Graph, error) {
+func LoadGraph(filename string) (*Graph, error) {
 	graph := NewGraph()
 
 	file, err := os.Open(filename)
