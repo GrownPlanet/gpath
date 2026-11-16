@@ -28,7 +28,7 @@ type Geometry struct {
 func ParseCoordinates(path string) (start, end geo.Point, err error) {
 	path = strings.TrimPrefix(path, "/")
 	if path == "" {
-		return start, end, fmt.Errorf("Please provide coordinates in the format: /lat,lon;lat,lon")
+		return start, end, fmt.Errorf("Please provide coordinates in the format: /lon,lat;lon,lat")
 	}
 
 	coordinates := strings.Split(path, ";")

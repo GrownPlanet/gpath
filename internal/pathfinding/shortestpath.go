@@ -9,25 +9,6 @@ import (
 	"gpath/internal/graph"
 )
 
-func lowestScore(arr []int64, scores map[int64]float64) (i, arrI int64) {
-	var lowestIdx, arrIdx int64
-	lowestScore := math.Inf(1)
-
-	for i, arrI := range arr {
-		score, ok := scores[arrI]
-		if !ok {
-			score = math.Inf(1)
-		}
-		if score < lowestScore {
-			arrIdx = int64(i)
-			lowestIdx = arrI
-			lowestScore = score
-		}
-	}
-
-	return lowestIdx, arrIdx
-}
-
 func reverse(arr []int64) {
 	for i, j := 0, len(arr)-1; i < j; i, j = i+1, j-1 {
 		arr[i], arr[j] = arr[j], arr[i]
@@ -82,7 +63,7 @@ func aStar(g *graph.Graph, start, end int64, h Heuristic) ([]int64, error) {
 		}
 	}
 
-	return []int64{}, fmt.Errorf("No path found")
+	return []int64{}, fmt.Errorf("no path found")
 }
 
 func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
