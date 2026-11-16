@@ -13,3 +13,11 @@ func HaversineDistance(a, b Point) float64 {
 		math.Cos(p1)*math.Cos(p2)*math.Sin(dl/2)*math.Sin(dl/2)
 	return 2 * R * math.Asin(math.Sqrt(h))
 }
+
+func Distance(points []Point) float64 {
+	dist := 0.0
+	for i := range len(points) - 1 {
+		dist += HaversineDistance(points[i], points[i+1])
+	}
+	return dist
+}

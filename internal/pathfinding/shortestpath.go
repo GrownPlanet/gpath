@@ -85,16 +85,15 @@ func aStar(g *graph.Graph, start, end int64, h Heuristic) ([]int64, error) {
 	return []int64{}, fmt.Errorf("No path found")
 }
 
-func idsToList(g *graph.Graph, ids []int64) [][2]float64 {
-	points := make([][2]float64, len(ids))
+func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
+	points := make([]geo.Point, len(ids))
 	for i, id := range ids {
-		n := g.Nodes[id]
-		points[i] = [2]float64{n.Lat, n.Lon}
+		points[i] = g.Nodes[id].ToPoint()
 	}
 	return points
 }
 
-func ShortestPath(g *graph.Graph, kdTree *graph.KDNode, start, end geo.Point) ([][2]float64, error) {
+func ShortestPath(g *graph.Graph, kdTree *graph.KDNode, start, end geo.Point) ([]geo.Point, error) {
 	startId := kdTree.NearestTo(g, start)
 	endId := kdTree.NearestTo(g, end)
 
@@ -105,8 +104,8 @@ func ShortestPath(g *graph.Graph, kdTree *graph.KDNode, start, end geo.Point) ([
 
 	path, err := aStar(g, startId, endId, h)
 	if err != nil {
-		return [][2]float64{}, err
+		return []geo.Point{}, err
 	}
 
-	return idsToList(g, path), nil
+	return idsToPoints(g, path), nil
 }

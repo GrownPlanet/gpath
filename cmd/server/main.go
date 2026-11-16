@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"gpath/internal/geo"
 	"gpath/internal/graph"
 	"gpath/internal/osm"
 	"gpath/internal/pathfinding"
@@ -34,13 +35,19 @@ func (s Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	distance := geo.Distance(shortestPath)
+	// assuming an average walking pace of 5km/h = 1.388 m/s
+	duration := distance * 0.72
+
 	fmt.Println()
 	fmt.Println("calculated path")
 	fmt.Println(" > start:", start)
 	fmt.Println(" > end:", end)
-	fmt.Println(" > duration:", time.Since(timer).Milliseconds(), "ms")
+	fmt.Println(" > distance:", distance, "m")
+	fmt.Println(" > duration:", duration, "s")
+	fmt.Println(" > compute duration:", time.Since(timer).Milliseconds(), "ms")
 
-	server.SendResponse(w, shortestPath, 0, 0)
+	server.SendResponse(w, server.FlattenPoints(shortestPath), distance, duration)
 }
 
 func main() {
