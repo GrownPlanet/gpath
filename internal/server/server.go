@@ -51,8 +51,8 @@ func ParseCoordinates(path string) (start, end geo.Point, err error) {
 		return start, end, fmt.Errorf("Invalid coordinate values. Expected floating point numbers")
 	}
 
-	start = geo.Point{Lat: startLat, Lon: startLon}
-	end = geo.Point{Lat: endLat, Lon: endLon}
+	start = geo.Point{Lon: startLon, Lat: startLat}
+	end = geo.Point{Lon: endLon, Lat: endLat}
 
 	return start, end, nil
 }
