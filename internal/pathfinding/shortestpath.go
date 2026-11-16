@@ -97,7 +97,6 @@ func idsToList(g *graph.Graph, ids []int64) [][2]float64 {
 func ShortestPath(g *graph.Graph, start, end geo.Point) ([][2]float64, error) {
 	start_id := g.NearestTo(start)
 	end_id := g.NearestTo(end)
-	fmt.Println(start_id, end_id)
 
 	goal := g.Nodes[end_id].ToPoint()
 	h := func(id int64) float64 {

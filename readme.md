@@ -15,5 +15,5 @@ go run ./cmd/cli
 - [ ] k-d tree voor punt te vinden
 - [x] A* of dijkstra voor padbepaling
 - [x] een server van maken
-- [ ] server code cleanup
-- [ ] meer debug voor server
+- [x] server code cleanup
+- [x] meer debug voor server
