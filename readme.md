@@ -14,3 +14,37 @@ go run .
 
 - [ ] k-d tree voor punt te vinden
 - [ ] A* of dijkstra voor padbepaling
+
+## File structure
+
+pathfinder/
+├── cmd/
+│   └── server/
+│       └── main.go
+│
+├── internal/
+│   ├── server/
+│   │   ├── server.go
+│   │   └── handler.go
+│   │
+│   ├── osm/
+│   │   ├── reader.go
+│   │   └── parser.go
+│   │
+│   ├── graph/
+│   │   ├── graph.go
+│   │   └── node.go
+│   │
+│   ├── pathfinding/
+│   │   ├── astar.go
+│   │   └── dijkstra.go
+│   │
+│   └── geo/
+│       ├── haversine.go
+│       └── kdtree.go
+│
+├── proto/
+│   └── pathfinder.proto
+│
+├── go.mod
+└── go.sum

@@ -1,8 +1,11 @@
-package main
+package geo
 
-import "math"
+import (
+	"gpath/internal/graph"
+	"math"
+)
 
-func HaversineDistance(a, b Node) float64 {
+func HaversineDistance(a, b graph.Node) float64 {
 	const R = 6371000.0
 	rad := math.Pi / 180
 	p1, p2 := a.Lat*rad, b.Lat*rad
