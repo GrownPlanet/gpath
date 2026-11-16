@@ -60,7 +60,7 @@ func ParseCoordinates(path string) (start, end geo.Point, err error) {
 func FlattenPoints(points []geo.Point) [][2]float64 {
 	flatPoints := make([][2]float64, len(points))
 	for i, p := range points {
-		flatPoints[i] = [2]float64{p.Lat, p.Lon}
+		flatPoints[i] = [2]float64{p.Lon, p.Lat}
 	}
 	return flatPoints
 }
