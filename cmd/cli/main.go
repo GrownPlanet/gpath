@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"log"
 
 	"gpath/internal/geo"
 	"gpath/internal/osm"
@@ -14,8 +14,7 @@ func main() {
 
 	graph, err := osm.Load("gent.osm.pbf")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("error: %s\n", err)
 	}
 
 	fmt.Println("Done loading map")
@@ -27,8 +26,7 @@ func main() {
 
 	path, err := pathfinding.ShortestPath(graph, start, end)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("error: %s\n", err)
 	}
 	fmt.Println("Shortest path found:", path)
 }

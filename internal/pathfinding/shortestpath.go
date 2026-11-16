@@ -85,20 +85,19 @@ func aStar(g *graph.Graph, start, end int64, h Heuristic) ([]int64, error) {
 	return []int64{}, fmt.Errorf("No path found")
 }
 
-func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
-	points := make([]geo.Point, len(ids))
+func idsToList(g *graph.Graph, ids []int64) [][2]float64 {
+	points := make([][2]float64, len(ids))
 	for i, id := range ids {
-		points[i] = g.Nodes[id].ToPoint()
+		n := g.Nodes[id]
+		points[i] = [2]float64{n.Lat, n.Lon}
 	}
-	fmt.Println(len(ids), len(points)) // mismatch???
 	return points
 }
 
-func ShortestPath(g *graph.Graph, start, end geo.Point) ([]geo.Point, error) {
-	fmt.Println("Finding locations...")
+func ShortestPath(g *graph.Graph, start, end geo.Point) ([][2]float64, error) {
 	start_id := g.NearestTo(start)
 	end_id := g.NearestTo(end)
-	fmt.Println("Locations found:", start_id, end_id)
+	fmt.Println(start_id, end_id)
 
 	goal := g.Nodes[end_id].ToPoint()
 	h := func(id int64) float64 {
@@ -107,8 +106,8 @@ func ShortestPath(g *graph.Graph, start, end geo.Point) ([]geo.Point, error) {
 
 	path, err := aStar(g, start_id, end_id, h)
 	if err != nil {
-		return []geo.Point{}, err
+		return [][2]float64{}, err
 	}
 
-	return idsToPoints(g, path), nil
+	return idsToList(g, path), nil
 }
