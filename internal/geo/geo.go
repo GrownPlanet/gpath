@@ -5,7 +5,13 @@ import (
 	"math"
 )
 
-func HaversineDistance(a, b graph.Node) float64 {
+type Point struct{ Lat, Lon float64 }
+
+func NodeToPoint(node graph.Node) Point {
+	return Point{Lat: node.Lat, Lon: node.Lon}
+}
+
+func HaversineDistance(a, b Point) float64 {
 	const R = 6371000.0
 	rad := math.Pi / 180
 	p1, p2 := a.Lat*rad, b.Lat*rad

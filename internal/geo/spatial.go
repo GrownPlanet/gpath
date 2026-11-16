@@ -1,19 +1,18 @@
 package geo
 
 import (
-	"gpath/internal/graph"
 	"math"
+
+	"gpath/internal/graph"
 )
 
 // TODO: make this a KD-tree for final implementation
-func NearestTo(g *graph.Graph, lat, lon float64) int64 {
+func NearestTo(g *graph.Graph, to Point) int64 {
 	var nearestId int64
 	dist := math.Inf(1)
 
-	to := graph.Node{Lat: lat, Lon: lon}
-
 	for id, node := range g.Nodes {
-		newDist := HaversineDistance(node, to)
+		newDist := HaversineDistance(Point{Lat: node.Lat, Lon: node.Lon}, to)
 		if newDist < dist {
 			nearestId = id
 			dist = newDist

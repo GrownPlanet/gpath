@@ -70,7 +70,7 @@ func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, g *graph.Graph) {
 					a, okA := g.Nodes[prev]
 					b, okB := g.Nodes[ref]
 					if okA && okB {
-						d := geo.HaversineDistance(a, b)
+						d := geo.HaversineDistance(geo.NodeToPoint(a), geo.NodeToPoint(b))
 						g.Edges[prev] = append(g.Edges[prev], graph.Edge{To: ref, Dist: d})
 						g.Edges[ref] = append(g.Edges[ref], graph.Edge{To: prev, Dist: d})
 					}
