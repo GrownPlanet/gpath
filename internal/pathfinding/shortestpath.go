@@ -9,18 +9,18 @@ import (
 	"gpath/internal/graph"
 )
 
-func lowestScore(arr []int64, scores map[int64]float64) (i, arr_i int64) {
+func lowestScore(arr []int64, scores map[int64]float64) (i, arrI int64) {
 	var lowestIdx, arrIdx int64
 	lowestScore := math.Inf(1)
 
-	for i, arr_i := range arr {
-		score, ok := scores[arr_i]
+	for i, arrI := range arr {
+		score, ok := scores[arrI]
 		if !ok {
 			score = math.Inf(1)
 		}
 		if score < lowestScore {
 			arrIdx = int64(i)
-			lowestIdx = arr_i
+			lowestIdx = arrI
 			lowestScore = score
 		}
 	}
@@ -34,10 +34,10 @@ func reverse(arr []int64) {
 	}
 }
 
-func reconstructPath(came_from map[int64]int64, start, current int64) []int64 {
+func reconstructPath(cameFrom map[int64]int64, start, current int64) []int64 {
 	path := []int64{current}
 	for current != start {
-		current = came_from[current]
+		current = cameFrom[current]
 		path = append(path, current)
 	}
 	reverse(path)
@@ -94,16 +94,16 @@ func idsToList(g *graph.Graph, ids []int64) [][2]float64 {
 	return points
 }
 
-func ShortestPath(g *graph.Graph, start, end geo.Point) ([][2]float64, error) {
-	start_id := g.NearestTo(start)
-	end_id := g.NearestTo(end)
+func ShortestPath(g *graph.Graph, kdTree, start, end geo.Point) ([][2]float64, error) {
+	startId := g.NearestTo(start)
+	endId := g.NearestTo(end)
 
-	goal := g.Nodes[end_id].ToPoint()
+	goal := g.Nodes[endId].ToPoint()
 	h := func(id int64) float64 {
 		return geo.HaversineDistance(g.Nodes[id].ToPoint(), goal)
 	}
 
-	path, err := aStar(g, start_id, end_id, h)
+	path, err := aStar(g, startId, endId, h)
 	if err != nil {
 		return [][2]float64{}, err
 	}

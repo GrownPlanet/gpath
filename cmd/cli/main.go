@@ -43,10 +43,9 @@ func main() {
 	fmt.Println("Building k-d tree...")
 	timer = time.Now()
 
-	kd_tree := graph.BuildKDTree(g)
+	kdTree := graph.BuildKDTree(g)
 
 	fmt.Println("Built tree in", time.Since(timer).Milliseconds(), "ms")
-	_ = kd_tree
 
 	start := geo.Point{Lon: startLon, Lat: startLat}
 	end := geo.Point{Lon: endLon, Lat: endLat}

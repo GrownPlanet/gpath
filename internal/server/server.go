@@ -36,17 +36,17 @@ func ParseCoordinates(path string) (start, end geo.Point, err error) {
 		return start, end, fmt.Errorf("Invalid format. Expected two coordinate pairs separated by ';'")
 	}
 
-	start_strings := strings.Split(coordinates[0], ",")
-	end_strings := strings.Split(coordinates[1], ",")
+	startStrings := strings.Split(coordinates[0], ",")
+	endStrings := strings.Split(coordinates[1], ",")
 
-	if len(start_strings) != 2 || len(end_strings) != 2 {
+	if len(startStrings) != 2 || len(endStrings) != 2 {
 		return start, end, fmt.Errorf("Invalid coordinate values. Expected lat,lon")
 	}
 
-	startLon, err2 := strconv.ParseFloat(start_strings[0], 64)
-	startLat, err1 := strconv.ParseFloat(start_strings[1], 64)
-	endLon, err4 := strconv.ParseFloat(end_strings[0], 64)
-	endLat, err3 := strconv.ParseFloat(end_strings[1], 64)
+	startLon, err2 := strconv.ParseFloat(startStrings[0], 64)
+	startLat, err1 := strconv.ParseFloat(startStrings[1], 64)
+	endLon, err4 := strconv.ParseFloat(endStrings[0], 64)
+	endLat, err3 := strconv.ParseFloat(endStrings[1], 64)
 	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
 		return start, end, fmt.Errorf("Invalid coordinate values. Expected floating point numbers")
 	}
