@@ -21,7 +21,3 @@ You can call the server using curl
 ```sh
 curl -s "http://localhost:8080/3.7251,51.0538;3.72911857634063,51.05529475737477"
 ```
-
-## TODO
-
-- [ ] k-d tree for finding points
