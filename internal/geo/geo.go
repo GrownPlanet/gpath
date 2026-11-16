@@ -1,15 +1,8 @@
 package geo
 
-import (
-	"gpath/internal/graph"
-	"math"
-)
+import "math"
 
 type Point struct{ Lat, Lon float64 }
-
-func NodeToPoint(node graph.Node) Point {
-	return Point{Lat: node.Lat, Lon: node.Lon}
-}
 
 func HaversineDistance(a, b Point) float64 {
 	const R = 6371000.0

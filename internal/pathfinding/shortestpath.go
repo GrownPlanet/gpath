@@ -70,7 +70,7 @@ func aStar(g *graph.Graph, start, end int64, startp geo.Point) ([]int64, error) 
 				g_score[neighbour.To] = tentative_g_score
 
 				// TODO: move to seperate file + heuristic input function
-				f_score[neighbour.To] = tentative_g_score + geo.HaversineDistance(startp, geo.NodeToPoint(g.Nodes[neighbour.To]))
+				f_score[neighbour.To] = tentative_g_score + geo.HaversineDistance(startp, g.Nodes[neighbour.To].ToPoint())
 				if !slices.Contains(open, neighbour.To) {
 					open = append(open, neighbour.To)
 				}
@@ -84,7 +84,7 @@ func aStar(g *graph.Graph, start, end int64, startp geo.Point) ([]int64, error) 
 func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
 	points := make([]geo.Point, len(ids))
 	for i, id := range ids {
-		points[i] = geo.NodeToPoint(g.Nodes[id])
+		points[i] = g.Nodes[id].ToPoint()
 	}
 	fmt.Println(len(ids), len(points)) // mismatch???
 	return points
@@ -92,8 +92,8 @@ func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
 
 func ShortestPath(g *graph.Graph, start, end geo.Point) ([]geo.Point, error) {
 	fmt.Println("Finding locations...")
-	start_node_id := geo.NearestTo(g, start)
-	end_node_id := geo.NearestTo(g, end)
+	start_node_id := g.NearestTo(start)
+	end_node_id := g.NearestTo(end)
 	fmt.Println("Locations found:", start_node_id, end_node_id)
 
 	path, err := aStar(g, start_node_id, end_node_id, start)
