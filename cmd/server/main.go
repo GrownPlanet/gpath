@@ -19,7 +19,7 @@ type Server struct {
 	kdTree *graph.KDNode
 }
 
-func (s Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 	timer := time.Now()
 
 	start, end, err := server.ParseCoordinates(r.URL.Path)
@@ -60,8 +60,7 @@ func main() {
 
 	g, err := osm.Load(os.Args[1])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-		os.Exit(1)
+		log.Fatal(os.Stderr, "error: %s\n", err)
 	}
 
 	fmt.Println("Loaded map in", time.Since(timer).Milliseconds(), "ms")
