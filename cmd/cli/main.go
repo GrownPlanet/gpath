@@ -14,7 +14,10 @@ import (
 
 func main() {
 	if len(os.Args) != 6 {
-		log.Fatalf("Usage: %s [map file] [start lon] [start lat] [end lon] [end lat]", os.Args[0])
+		log.Fatalf(
+			"Usage: %s [map file] [start lon] [start lat] [end lon] [end lat]",
+			os.Args[0],
+		)
 	}
 
 	startLon, err2 := strconv.ParseFloat(os.Args[2], 64)
@@ -47,5 +50,10 @@ func main() {
 		log.Fatalf("error: %s\n", err)
 	}
 
-	fmt.Println("Shortest path found in", time.Since(searchStart).Milliseconds(), "ms;", path)
+	fmt.Println(
+		"Shortest path found in",
+		time.Since(searchStart).Milliseconds(),
+		"ms;",
+		path,
+	)
 }

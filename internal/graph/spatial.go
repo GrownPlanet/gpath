@@ -12,7 +12,7 @@ func (g *Graph) NearestTo(to geo.Point) int64 {
 	dist := math.Inf(1)
 
 	for id, node := range g.Nodes {
-		newDist := geo.HaversineDistance(geo.Point{Lat: node.Lat, Lon: node.Lon}, to)
+		newDist := geo.HaversineDistance(node.ToPoint(), to)
 		if newDist < dist {
 			nearestId = id
 			dist = newDist

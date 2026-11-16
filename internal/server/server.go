@@ -57,7 +57,11 @@ func ParseCoordinates(path string) (start, end geo.Point, err error) {
 	return start, end, nil
 }
 
-func SendResponse(w http.ResponseWriter, path [][2]float64, distance, duration float64) {
+func SendResponse(
+	w http.ResponseWriter,
+	path [][2]float64,
+	distance, duration float64,
+) {
 	response := RouteResponse{
 		Code: "Ok",
 		Routes: []Route{
