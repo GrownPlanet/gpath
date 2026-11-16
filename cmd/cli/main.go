@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gpath/internal/geo"
+	"gpath/internal/graph"
 	"gpath/internal/osm"
 	"gpath/internal/pathfinding"
 )
@@ -30,29 +31,37 @@ func main() {
 	}
 
 	fmt.Println("Loading map...")
-	loadStart := time.Now()
+	timer := time.Now()
 
-	graph, err := osm.Load(os.Args[1])
+	g, err := osm.Load(os.Args[1])
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
 
-	fmt.Println("Loaded map in", time.Since(loadStart).Milliseconds(), "ms")
+	fmt.Println("Loaded map in", time.Since(timer).Milliseconds(), "ms")
+
+	fmt.Println("Building k-d tree...")
+	timer = time.Now()
+
+	kd_tree := graph.BuildKDTree(g)
+
+	fmt.Println("Built tree in", time.Since(timer).Milliseconds(), "ms")
+	_ = kd_tree
 
 	start := geo.Point{Lon: startLon, Lat: startLat}
 	end := geo.Point{Lon: endLon, Lat: endLat}
 
 	fmt.Println("Finding shortest path...")
-	searchStart := time.Now()
+	timer = time.Now()
 
-	path, err := pathfinding.ShortestPath(graph, start, end)
+	path, err := pathfinding.ShortestPath(g, start, end)
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
 
 	fmt.Println(
 		"Shortest path found in",
-		time.Since(searchStart).Milliseconds(),
+		time.Since(timer).Milliseconds(),
 		"ms;",
 		path,
 	)
