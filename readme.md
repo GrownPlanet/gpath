@@ -7,7 +7,13 @@ A simple pathfinding algorithm based on OSM-data written in go.
 You will need to have [go](https://go.dev/) installed, then you can run:
 
 ```sh
-go run ./cmd/cli
+go run ./cmd/cli [map file].osm.pbf [start lon] [start lat] [end lon] [end lat]
+```
+
+or
+
+```sh
+go run ./cmd/server [map file].osm.pbf
 ```
 
 ## TODO
