@@ -10,8 +10,8 @@ You will need to have [go](https://go.dev/) installed, then you can run:
 go run ./cmd/cli
 ```
 
-## ToDo
+## TODO
 
 - [ ] k-d tree voor punt te vinden
-- [ ] A* of dijkstra voor padbepaling
+- [x] A* of dijkstra voor padbepaling
 - [ ] een server van maken

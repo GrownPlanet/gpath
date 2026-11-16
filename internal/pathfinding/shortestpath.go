@@ -44,7 +44,9 @@ func reconstructPath(came_from map[int64]int64, start, current int64) []int64 {
 	return path
 }
 
-func aStar(g *graph.Graph, start, end int64, startp geo.Point) ([]int64, error) {
+type Heuristic func(id int64) float64
+
+func aStar(g *graph.Graph, start, end int64, h Heuristic) ([]int64, error) {
 	open := []int64{start}
 	came_from := map[int64]int64{}
 
@@ -69,8 +71,7 @@ func aStar(g *graph.Graph, start, end int64, startp geo.Point) ([]int64, error) 
 				came_from[neighbour.To] = current
 				g_score[neighbour.To] = tentative_g_score
 
-				// TODO: move to seperate file + heuristic input function
-				f_score[neighbour.To] = tentative_g_score + geo.HaversineDistance(startp, g.Nodes[neighbour.To].ToPoint())
+				f_score[neighbour.To] = tentative_g_score + h(neighbour.To)
 				if !slices.Contains(open, neighbour.To) {
 					open = append(open, neighbour.To)
 				}
@@ -92,11 +93,16 @@ func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
 
 func ShortestPath(g *graph.Graph, start, end geo.Point) ([]geo.Point, error) {
 	fmt.Println("Finding locations...")
-	start_node_id := g.NearestTo(start)
-	end_node_id := g.NearestTo(end)
-	fmt.Println("Locations found:", start_node_id, end_node_id)
+	start_id := g.NearestTo(start)
+	end_id := g.NearestTo(end)
+	fmt.Println("Locations found:", start_id, end_id)
 
-	path, err := aStar(g, start_node_id, end_node_id, start)
+	goal := g.Nodes[end_id].ToPoint()
+	h := func (id int64) float64 {
+		return geo.HaversineDistance(g.Nodes[id].ToPoint(), goal)
+	}
+
+	path, err := aStar(g, start_id, end_id, h)
 	if err != nil {
 		return []geo.Point{}, err
 	}
