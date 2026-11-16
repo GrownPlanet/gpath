@@ -1,9 +1,9 @@
 package pathfinding
 
 import (
+	"container/heap"
 	"fmt"
 	"math"
-	"slices"
 
 	"gpath/internal/geo"
 	"gpath/internal/graph"
@@ -47,35 +47,38 @@ func reconstructPath(came_from map[int64]int64, start, current int64) []int64 {
 type Heuristic func(id int64) float64
 
 func aStar(g *graph.Graph, start, end int64, h Heuristic) ([]int64, error) {
-	open := []int64{start}
-	came_from := map[int64]int64{}
+	open := &pq{{id: start, g: 0, f: h(start)}}
+	cameFrom := map[int64]int64{}
+	gScore := map[int64]float64{start: 0.0}
 
-	g_score := map[int64]float64{start: 0.0}
-	f_score := map[int64]float64{start: 0.0}
-
-	for len(open) != 0 {
-		current, i := lowestScore(open, f_score)
-		if current == end {
-			return reconstructPath(came_from, start, current), nil
+	for open.Len() != 0 {
+		cur := heap.Pop(open).(item)
+		if cur.g > gScore[cur.id] {
+			continue // stale entry
+		}
+		if cur.id == end {
+			return reconstructPath(cameFrom, start, end), nil
 		}
 
-		open = append(open[:i], open[i+1:]...)
-		for _, neighbour := range g.Edges[current] {
-			tentative_g_score := g_score[current] + neighbour.Dist
-			old_g_score, ok := g_score[neighbour.To]
+		for _, neighbour := range g.Edges[cur.id] {
+			tentative := cur.g + neighbour.Dist
+			old, ok := gScore[neighbour.To]
 			if !ok {
-				old_g_score = math.Inf(1)
+				old = math.Inf(1)
 			}
 
-			if tentative_g_score < old_g_score {
-				came_from[neighbour.To] = current
-				g_score[neighbour.To] = tentative_g_score
-
-				f_score[neighbour.To] = tentative_g_score + h(neighbour.To)
-				if !slices.Contains(open, neighbour.To) {
-					open = append(open, neighbour.To)
-				}
+			if tentative >= old {
+				continue
 			}
+
+			cameFrom[neighbour.To] = cur.id
+			gScore[neighbour.To] = tentative
+
+			heap.Push(open, item{
+				id: neighbour.To,
+				g:  tentative,
+				f:  tentative + h(neighbour.To)},
+			)
 		}
 	}
 
@@ -98,7 +101,7 @@ func ShortestPath(g *graph.Graph, start, end geo.Point) ([]geo.Point, error) {
 	fmt.Println("Locations found:", start_id, end_id)
 
 	goal := g.Nodes[end_id].ToPoint()
-	h := func (id int64) float64 {
+	h := func(id int64) float64 {
 		return geo.HaversineDistance(g.Nodes[id].ToPoint(), goal)
 	}
 
