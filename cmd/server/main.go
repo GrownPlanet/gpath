@@ -14,11 +14,12 @@ import (
 )
 
 type Server struct {
-	g *graph.Graph
+	g      *graph.Graph
+	kdTree *graph.KDNode
 }
 
 func (s Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
-	reqStart := time.Now()
+	timer := time.Now()
 
 	start, end, err := server.ParseCoordinates(r.URL.Path)
 	if err != nil {
@@ -26,7 +27,7 @@ func (s Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortestPath, err := pathfinding.ShortestPath(s.g, start, end)
+	shortestPath, err := pathfinding.ShortestPath(s.g, s.kdTree, start, end)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		http.Error(w, "Failed to find path", http.StatusBadRequest)
@@ -37,7 +38,7 @@ func (s Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("calculated path")
 	fmt.Println(" > start:", start)
 	fmt.Println(" > end:", end)
-	fmt.Println(" > duration:", time.Since(reqStart).Milliseconds(), "ms")
+	fmt.Println(" > duration:", time.Since(timer).Milliseconds(), "ms")
 
 	server.SendResponse(w, shortestPath, 0, 0)
 }
@@ -48,7 +49,7 @@ func main() {
 	}
 
 	fmt.Println("Loading map...")
-	loadStart := time.Now()
+	timer := time.Now()
 
 	g, err := osm.Load(os.Args[1])
 	if err != nil {
@@ -56,9 +57,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Loaded map in", time.Since(loadStart).Milliseconds(), "ms")
+	fmt.Println("Loaded map in", time.Since(timer).Milliseconds(), "ms")
+	fmt.Println("Building k-d tree...")
+	timer = time.Now()
 
-	server := Server{g: g}
+	kdTree := graph.BuildKDTree(g)
+
+	fmt.Println("Built tree in", time.Since(timer).Milliseconds(), "ms")
+
+	server := Server{g: g, kdTree: kdTree}
 
 	http.HandleFunc("/", server.coordinateHandler)
 

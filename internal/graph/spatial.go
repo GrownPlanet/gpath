@@ -11,7 +11,7 @@ type KDNode struct {
 	left, right *KDNode
 }
 
-func getValue(g *Graph, ids []int64, axis, i int64) float64 {
+func getValue(g *Graph, ids []int64, axis, i int) float64 {
 	if axis%2 == 0 {
 		return g.Nodes[ids[i]].Lat
 	} else {
@@ -19,14 +19,15 @@ func getValue(g *Graph, ids []int64, axis, i int64) float64 {
 	}
 }
 
-func partition(g *Graph, ids []int64, axis, l, r, pivot int64) int64 {
+func partition(g *Graph, ids []int64, axis, l, r, pivot int) int {
 	pivotValue := getValue(g, ids, axis, pivot)
+	ids[pivot], ids[r] = ids[r], ids[pivot]
 
 	idx := l
 	for i := l; i < r; i++ {
-		if getValue(g, ids, axis, i) <= pivotValue {
+		if getValue(g, ids, axis, i) < pivotValue {
 			ids[i], ids[idx] = ids[idx], ids[i]
-			idx += 1
+			idx++
 		}
 	}
 
@@ -35,16 +36,16 @@ func partition(g *Graph, ids []int64, axis, l, r, pivot int64) int64 {
 	return idx
 }
 
-func selectMedian(g *Graph, ids []int64, axis, l, r int64) (median, i int64) {
+func selectMedian(g *Graph, ids []int64, axis, l, r int) int {
 	k := l + (r-l)/2
 	for {
 		if l == r {
-			return ids[l], l
+			return l
 		}
 		pivot := l + (r-l)/2
 		pivot = partition(g, ids, axis, l, r, pivot)
 		if k == pivot {
-			return ids[k], k
+			return k
 		} else if k < pivot {
 			r = pivot - 1
 		} else {
@@ -53,16 +54,16 @@ func selectMedian(g *Graph, ids []int64, axis, l, r int64) (median, i int64) {
 	}
 }
 
-func build(g *Graph, ids []int64, depth int64) *KDNode {
+func build(g *Graph, ids []int64, depth int) *KDNode {
 	if len(ids) == 0 {
 		return nil
 	}
 
 	axis := depth % 2
-	median, i := selectMedian(g, ids, axis, 0, int64(len(ids)-1))
+	i := selectMedian(g, ids, axis, 0, len(ids)-1)
 
 	return &KDNode{
-		id:    median,
+		id:    ids[i],
 		left:  build(g, ids[:i], depth+1),
 		right: build(g, ids[i+1:], depth+1),
 	}
@@ -77,18 +78,64 @@ func BuildKDTree(g *Graph) *KDNode {
 	return build(g, ids, 0)
 }
 
-// TODO: make this a KD-tree for final implementation
-func (g *Graph) NearestTo(to geo.Point) int64 {
-	var nearestId int64
-	dist := math.Inf(1)
+// TODO: a little bit ai, review this
+func (root *KDNode) NearestTo(g *Graph, target geo.Point) int64 {
+	bestID := int64(-1)
+	bestDist := math.Inf(1)
 
-	for id, node := range g.Nodes {
-		newDist := geo.HaversineDistance(node.ToPoint(), to)
-		if newDist < dist {
-			nearestId = id
-			dist = newDist
+	var search func(node *KDNode, depth int)
+	search = func(node *KDNode, depth int) {
+		if node == nil {
+			return
+		}
+
+		currNode := g.Nodes[node.id]
+		d := geo.HaversineDistance(currNode.ToPoint(), target)
+		if d < bestDist {
+			bestDist = d
+			bestID = node.id
+		}
+
+		axis := depth % 2
+		var diff float64
+		var splitPoint geo.Point
+
+		if axis == 0 {
+			diff = target.Lat - currNode.Lat
+			splitPoint = geo.Point{Lat: currNode.Lat, Lon: target.Lon}
+		} else {
+			diff = target.Lon - currNode.Lon
+			splitPoint = geo.Point{Lat: target.Lat, Lon: currNode.Lon}
+		}
+
+		near, far := node.left, node.right
+		if diff >= 0 {
+			near, far = node.right, node.left
+		}
+
+		search(near, depth+1)
+
+		if geo.HaversineDistance(target, splitPoint) < bestDist {
+			search(far, depth+1)
 		}
 	}
 
-	return nearestId
+	search(root, 0)
+	return bestID
 }
+
+// Stupid version
+// func (g *Graph) NearestTo(point geo.Point) int64 {
+// 	var nearestId int64
+// 	dist := math.Inf(1)
+//
+// 	for id, node := range g.Nodes {
+// 		newDist := geo.HaversineDistance(node.ToPoint(), point)
+// 		if newDist < dist {
+// 			nearestId = id
+// 			dist = newDist
+// 		}
+// 	}
+//
+// 	return nearestId
+// }

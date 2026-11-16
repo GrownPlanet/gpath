@@ -94,9 +94,9 @@ func idsToList(g *graph.Graph, ids []int64) [][2]float64 {
 	return points
 }
 
-func ShortestPath(g *graph.Graph, kdTree, start, end geo.Point) ([][2]float64, error) {
-	startId := g.NearestTo(start)
-	endId := g.NearestTo(end)
+func ShortestPath(g *graph.Graph, kdTree *graph.KDNode, start, end geo.Point) ([][2]float64, error) {
+	startId := kdTree.NearestTo(g, start)
+	endId := kdTree.NearestTo(g, end)
 
 	goal := g.Nodes[endId].ToPoint()
 	h := func(id int64) float64 {

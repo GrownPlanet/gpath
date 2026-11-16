@@ -53,7 +53,7 @@ func main() {
 	fmt.Println("Finding shortest path...")
 	timer = time.Now()
 
-	path, err := pathfinding.ShortestPath(g, start, end)
+	path, err := pathfinding.ShortestPath(g, kdTree, start, end)
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
