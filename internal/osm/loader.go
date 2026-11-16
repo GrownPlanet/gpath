@@ -101,6 +101,14 @@ func parseBlock(file *os.File, g *graph.Graph) error {
 	return nil
 }
 
+func removeUnusedNodes(g *graph.Graph) {
+	for id := range g.Nodes {
+		if len(g.Edges[id]) == 0 {
+			delete(g.Nodes, id)
+		}
+	}
+}
+
 func Load(filename string) (*graph.Graph, error) {
 	g := graph.NewGraph()
 
@@ -119,6 +127,8 @@ func Load(filename string) (*graph.Graph, error) {
 			return g, err
 		}
 	}
+
+	removeUnusedNodes(g)
 
 	return g, nil
 }
