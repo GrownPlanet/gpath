@@ -1,18 +1,18 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"encoding/json"
 	"os"
 	"strconv"
 	"strings"
 
 	"gpath/internal/geo"
-	"gpath/internal/pathfinding"
 	"gpath/internal/graph"
 	"gpath/internal/osm"
+	"gpath/internal/pathfinding"
 )
 
 type RouteResponse struct {
@@ -21,9 +21,9 @@ type RouteResponse struct {
 }
 
 type Route struct {
-	Geometry   Geometry `json:"geometry"`
-	Distance   float64  `json:"distance"`
-	Duration   float64  `json:"duration"`
+	Geometry Geometry `json:"geometry"`
+	Distance float64  `json:"distance"`
+	Duration float64  `json:"duration"`
 }
 
 type Geometry struct {
@@ -65,7 +65,7 @@ func coordinateHandler(w http.ResponseWriter, r *http.Request, g *graph.Graph) {
 
 	shortestPath, err := pathfinding.ShortestPath(g, start, end)
 	if err != nil {
-        fmt.Fprintf(os.Stderr, "error: %s\n", err)
+		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		http.Error(w, "Failed to find path", http.StatusBadRequest)
 		return
 	}
@@ -74,7 +74,7 @@ func coordinateHandler(w http.ResponseWriter, r *http.Request, g *graph.Graph) {
 		Code: "Ok",
 		Routes: []Route{
 			{
-				Geometry: Geometry{ Coordinates: shortestPath },
+				Geometry: Geometry{Coordinates: shortestPath},
 				Distance: 0,
 				Duration: 0,
 			},
