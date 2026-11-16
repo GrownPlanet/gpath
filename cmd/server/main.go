@@ -43,10 +43,14 @@ func (s Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatalf("Usage: %s [map file]", os.Args[0])
+	}
+
 	fmt.Println("Loading map...")
 	loadStart := time.Now()
 
-	g, err := osm.Load("gent.osm.pbf")
+	g, err := osm.Load(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		os.Exit(1)
