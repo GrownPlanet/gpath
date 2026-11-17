@@ -1,7 +1,7 @@
 package pathfinding
 
 type item struct {
-	id int64
+	id int
 	g  float64
 	f  float64
 }

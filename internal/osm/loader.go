@@ -13,6 +13,55 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// TODO: calculate dist in toGraph, so the data can be out of order and
+// still parse correctly
+type tempEdge struct {
+	To   int64
+	Dist float64
+}
+
+type tempGraph struct {
+	Nodes map[int64]graph.Node
+	Edges map[int64][]tempEdge
+}
+
+func (g *tempGraph) toGraph() *graph.Graph {
+	nodeIDMap := make(map[int64]int)
+	var nodes []graph.Node
+
+	for id, edges := range g.Edges {
+		if len(edges) == 0 {
+			continue
+		}
+		if node, ok := g.Nodes[id]; ok {
+			nodeIDMap[id] = len(nodes)
+			nodes = append(nodes, node)
+		}
+	}
+
+	edges := make([][]graph.Edge, len(nodes))
+	for id, tempEdgeList := range g.Edges {
+		fromIdx, ok := nodeIDMap[id]
+		if !ok {
+			continue
+		}
+		for _, te := range tempEdgeList {
+			toIdx, okTo := nodeIDMap[te.To]
+			if okTo {
+				edges[fromIdx] = append(edges[fromIdx], graph.Edge{
+					To:   toIdx,
+					Dist: te.Dist,
+				})
+			}
+		}
+	}
+
+	return &graph.Graph {
+		Nodes: nodes,
+		Edges: edges,
+	}
+}
+
 var walkable = []string{
 	"footway", "path", "pedestrian", "steps", "residential", "living_street",
 	"service", "track", "unclassified", "tertiary", "secondary", "primary",
@@ -33,7 +82,7 @@ func isWalkable(tags map[string]string) bool {
 	return true
 }
 
-func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, g *graph.Graph) {
+func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, g *tempGraph) {
 	gran := int64(primitiveBlock.GetGranularity())
 	latOffset := primitiveBlock.GetLatOffset()
 	lonOffset := primitiveBlock.GetLonOffset()
@@ -69,17 +118,19 @@ func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, g *graph.Graph) {
 				if i > 0 {
 					a, okA := g.Nodes[prev]
 					b, okB := g.Nodes[ref]
-					if okA && okB {
-						d := geo.HaversineDistance(a.ToPoint(), b.ToPoint())
-						g.Edges[prev] = append(g.Edges[prev], graph.Edge{
-							To:   ref,
-							Dist: d,
-						})
-						g.Edges[ref] = append(g.Edges[ref], graph.Edge{
-							To:   prev,
-							Dist: d,
-						})
+					if !(okA && okB) {
+						fmt.Fprintf(os.Stderr, "error: nodes %d and %d do not exist (yet), skipping", prev, ref)
+						continue
 					}
+					d := geo.HaversineDistance(a.ToPoint(), b.ToPoint())
+					g.Edges[prev] = append(g.Edges[prev], tempEdge{
+						To:   ref,
+						Dist: d,
+					})
+					g.Edges[ref] = append(g.Edges[ref], tempEdge{
+						To:   prev,
+						Dist: d,
+					})
 				}
 				prev = ref
 			}
@@ -87,7 +138,7 @@ func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, g *graph.Graph) {
 	}
 }
 
-func parseBlock(file *os.File, g *graph.Graph) error {
+func parseBlock(file *os.File, g *tempGraph) error {
 	blobHeader, rawData, err := getBlock(file)
 	if err != nil {
 		return err
@@ -97,7 +148,7 @@ func parseBlock(file *os.File, g *graph.Graph) error {
 	if headerType == "OSMData" {
 		var primitiveBlock pbf.PrimitiveBlock
 		if err := proto.Unmarshal(rawData, &primitiveBlock); err != nil {
-			return fmt.Errorf("failed to unmarshal PrimitiveBlockBlock: %w", err)
+			return fmt.Errorf("failed to unmarshal PrimitiveBlock: %w", err)
 		}
 		parsePrimitiveBlock(&primitiveBlock, g)
 	} else if headerType != "OSMHeader" {
@@ -107,34 +158,27 @@ func parseBlock(file *os.File, g *graph.Graph) error {
 	return nil
 }
 
-func removeUnusedNodes(g *graph.Graph) {
-	for id := range g.Nodes {
-		if len(g.Edges[id]) == 0 {
-			delete(g.Nodes, id)
-		}
-	}
-}
-
 func Load(filename string) (*graph.Graph, error) {
-	g := graph.NewGraph()
-
 	file, err := os.Open(filename)
 	if err != nil {
-		return g, fmt.Errorf("failed to open file: %w", err)
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
+	g := tempGraph{
+		Nodes: make(map[int64]graph.Node),
+		Edges: make(map[int64][]tempEdge),
+	}
+
 	for {
-		err = parseBlock(file, g)
+		err = parseBlock(file, &g)
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return g, err
+			return nil, err
 		}
 	}
 
-	removeUnusedNodes(g)
-
-	return g, nil
+	return g.toGraph(), nil
 }

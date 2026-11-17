@@ -9,14 +9,14 @@ import (
 	"gpath/internal/graph"
 )
 
-func reverse(arr []int64) {
+func reverse(arr []int) {
 	for i, j := 0, len(arr)-1; i < j; i, j = i+1, j-1 {
 		arr[i], arr[j] = arr[j], arr[i]
 	}
 }
 
-func reconstructPath(cameFrom map[int64]int64, start, current int64) []int64 {
-	path := []int64{current}
+func reconstructPath(cameFrom map[int]int, start, current int) []int {
+	path := []int{current}
 	for current != start {
 		current = cameFrom[current]
 		path = append(path, current)
@@ -25,12 +25,12 @@ func reconstructPath(cameFrom map[int64]int64, start, current int64) []int64 {
 	return path
 }
 
-type Heuristic func(id int64) float64
+type Heuristic func(id int) float64
 
-func aStar(g *graph.Graph, start, end int64, h Heuristic) ([]int64, error) {
+func aStar(g *graph.Graph, start, end int, h Heuristic) ([]int, error) {
 	open := &pq{{id: start, g: 0, f: h(start)}}
-	cameFrom := map[int64]int64{}
-	gScore := map[int64]float64{start: 0.0}
+	cameFrom := map[int]int{}
+	gScore := map[int]float64{start: 0.0}
 
 	for open.Len() != 0 {
 		cur := heap.Pop(open).(item)
@@ -63,10 +63,10 @@ func aStar(g *graph.Graph, start, end int64, h Heuristic) ([]int64, error) {
 		}
 	}
 
-	return []int64{}, fmt.Errorf("no path found")
+	return []int{}, fmt.Errorf("no path found")
 }
 
-func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
+func idsToPoints(g *graph.Graph, ids []int) []geo.Point {
 	points := make([]geo.Point, len(ids))
 	for i, id := range ids {
 		points[i] = g.Nodes[id].ToPoint()
@@ -74,12 +74,16 @@ func idsToPoints(g *graph.Graph, ids []int64) []geo.Point {
 	return points
 }
 
-func ShortestPath(g *graph.Graph, kdTree *graph.KDNode, start, end geo.Point) ([]geo.Point, error) {
+func ShortestPath(
+	g *graph.Graph,
+	kdTree *graph.KDNode,
+	start, end geo.Point,
+) ([]geo.Point, error) {
 	startId := kdTree.NearestTo(g, start)
 	endId := kdTree.NearestTo(g, end)
 
 	goal := g.Nodes[endId].ToPoint()
-	h := func(id int64) float64 {
+	h := func(id int) float64 {
 		return geo.HaversineDistance(g.Nodes[id].ToPoint(), goal)
 	}
 

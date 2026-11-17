@@ -5,17 +5,17 @@ import "gpath/internal/geo"
 type Node struct{ Lat, Lon float64 }
 
 type Edge struct {
-	To   int64
+	To   int
 	Dist float64
 }
 
 type Graph struct {
-	Nodes map[int64]Node
-	Edges map[int64][]Edge
+	Nodes []Node
+	Edges [][]Edge
 }
 
 func NewGraph() *Graph {
-	return &Graph{Nodes: map[int64]Node{}, Edges: map[int64][]Edge{}}
+	return &Graph{Nodes: []Node{}, Edges: [][]Edge{}}
 }
 
 func (n Node) ToPoint() geo.Point {

@@ -7,11 +7,11 @@ import (
 )
 
 type KDNode struct {
-	id          int64
+	id          int
 	left, right *KDNode
 }
 
-func getValue(g *Graph, ids []int64, axis, i int) float64 {
+func getValue(g *Graph, ids []int, axis, i int) float64 {
 	if axis == 0 {
 		return g.Nodes[ids[i]].Lat
 	} else {
@@ -19,7 +19,7 @@ func getValue(g *Graph, ids []int64, axis, i int) float64 {
 	}
 }
 
-func partition(g *Graph, ids []int64, axis, l, r, pivot int) int {
+func partition(g *Graph, ids []int, axis, l, r, pivot int) int {
 	pivotValue := getValue(g, ids, axis, pivot)
 	ids[pivot], ids[r] = ids[r], ids[pivot]
 
@@ -36,7 +36,7 @@ func partition(g *Graph, ids []int64, axis, l, r, pivot int) int {
 	return idx
 }
 
-func selectMedian(g *Graph, ids []int64, axis, l, r int) int {
+func selectMedian(g *Graph, ids []int, axis, l, r int) int {
 	k := l + (r-l)/2
 	for {
 		if l == r {
@@ -56,7 +56,7 @@ func selectMedian(g *Graph, ids []int64, axis, l, r int) int {
 	}
 }
 
-func build(g *Graph, ids []int64, depth int) *KDNode {
+func build(g *Graph, ids []int, depth int) *KDNode {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -72,7 +72,7 @@ func build(g *Graph, ids []int64, depth int) *KDNode {
 }
 
 func BuildKDTree(g *Graph) *KDNode {
-	ids := make([]int64, 0, len(g.Nodes))
+	ids := make([]int, 0, len(g.Nodes))
 	for k := range g.Nodes {
 		ids = append(ids, k)
 	}
@@ -80,8 +80,8 @@ func BuildKDTree(g *Graph) *KDNode {
 	return build(g, ids, 0)
 }
 
-func (root *KDNode) NearestTo(g *Graph, target geo.Point) int64 {
-	var bestID int64
+func (root *KDNode) NearestTo(g *Graph, target geo.Point) int {
+	var bestID int
 	bestDist := math.Inf(1)
 
 	var search func(node *KDNode, depth int)
