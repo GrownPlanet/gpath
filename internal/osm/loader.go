@@ -13,16 +13,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// TODO: calculate dist in toGraph, so the data can be out of order and
-// still parse correctly
-type tempEdge struct {
-	To   int64
-	Dist float64
-}
-
 type tempGraph struct {
 	Nodes map[int64]graph.Node
-	Edges map[int64][]tempEdge
+	Edges map[int64][]int64
 }
 
 func (g *tempGraph) toGraph() *graph.Graph {
@@ -45,14 +38,21 @@ func (g *tempGraph) toGraph() *graph.Graph {
 		if !ok {
 			continue
 		}
+		fromNode := nodes[fromIdx]
+		
 		for _, te := range tempEdgeList {
-			toIdx, okTo := nodeIDMap[te.To]
-			if okTo {
-				edges[fromIdx] = append(edges[fromIdx], graph.Edge{
-					To:   toIdx,
-					Dist: te.Dist,
-				})
+			toIdx, okTo := nodeIDMap[te]
+			if !okTo {
+				continue
 			}
+			toNode := nodes[toIdx]
+
+			d := geo.HaversineDistance(fromNode.ToPoint(), toNode.ToPoint())
+
+			edges[fromIdx] = append(edges[fromIdx], graph.Edge{
+				To:   toIdx,
+				Dist: d,
+			})
 		}
 	}
 
@@ -116,21 +116,8 @@ func parsePrimitiveBlock(primitiveBlock *pbf.PrimitiveBlock, g *tempGraph) {
 			for i, delta := range way.GetRefs() {
 				ref += delta
 				if i > 0 {
-					a, okA := g.Nodes[prev]
-					b, okB := g.Nodes[ref]
-					if !(okA && okB) {
-						fmt.Fprintf(os.Stderr, "error: nodes %d and %d do not exist (yet), skipping", prev, ref)
-						continue
-					}
-					d := geo.HaversineDistance(a.ToPoint(), b.ToPoint())
-					g.Edges[prev] = append(g.Edges[prev], tempEdge{
-						To:   ref,
-						Dist: d,
-					})
-					g.Edges[ref] = append(g.Edges[ref], tempEdge{
-						To:   prev,
-						Dist: d,
-					})
+					g.Edges[prev] = append(g.Edges[prev], ref)
+					g.Edges[ref] = append(g.Edges[ref], prev)
 				}
 				prev = ref
 			}
@@ -167,7 +154,7 @@ func Load(filename string) (*graph.Graph, error) {
 
 	g := tempGraph{
 		Nodes: make(map[int64]graph.Node),
-		Edges: make(map[int64][]tempEdge),
+		Edges: make(map[int64][]int64),
 	}
 
 	for {
