@@ -60,7 +60,7 @@ func main() {
 
 	g, err := osm.Load(os.Args[1])
 	if err != nil {
-		log.Fatal(os.Stderr, "error: %s\n", err)
+		log.Fatalf("error: %s\n", err)
 	}
 
 	fmt.Println("Loaded map in", time.Since(timer).Milliseconds(), "ms")
