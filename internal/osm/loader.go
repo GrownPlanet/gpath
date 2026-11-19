@@ -3,6 +3,7 @@ package osm
 import (
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"slices"
 
@@ -22,6 +23,9 @@ func (g *tempGraph) toGraph() *graph.Graph {
 	nodeIDMap := make(map[int64]int)
 	var nodes []graph.Node
 
+	minLat, minLon := math.Inf(1), math.Inf(1)
+	maxLat, maxLon := math.Inf(-1), math.Inf(-1)
+
 	for id, edges := range g.Edges {
 		if len(edges) == 0 {
 			continue
@@ -29,6 +33,12 @@ func (g *tempGraph) toGraph() *graph.Graph {
 		if node, ok := g.Nodes[id]; ok {
 			nodeIDMap[id] = len(nodes)
 			nodes = append(nodes, node)
+
+			minLat = min(minLat, node.Lat)
+			minLon = min(minLon, node.Lon)
+
+			maxLat = max(maxLat, node.Lat)
+			maxLon = max(maxLon, node.Lon)
 		}
 	}
 
@@ -39,7 +49,7 @@ func (g *tempGraph) toGraph() *graph.Graph {
 			continue
 		}
 		fromNode := nodes[fromIdx]
-		
+
 		for _, te := range tempEdgeList {
 			toIdx, okTo := nodeIDMap[te]
 			if !okTo {
@@ -56,9 +66,13 @@ func (g *tempGraph) toGraph() *graph.Graph {
 		}
 	}
 
-	return &graph.Graph {
+	return &graph.Graph{
 		Nodes: nodes,
 		Edges: edges,
+		Bounds: graph.Bounds{
+			Min: geo.Point{Lat: minLat, Lon: minLon},
+			Max: geo.Point{Lat: maxLat, Lon: maxLon},
+		},
 	}
 }
 

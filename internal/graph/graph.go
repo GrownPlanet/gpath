@@ -9,9 +9,14 @@ type Edge struct {
 	Dist float64
 }
 
+type Bounds struct {
+	Min, Max geo.Point
+}
+
 type Graph struct {
-	Nodes []Node
-	Edges [][]Edge
+	Nodes  []Node
+	Edges  [][]Edge
+	Bounds Bounds
 }
 
 func NewGraph() *Graph {

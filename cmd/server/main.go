@@ -22,15 +22,28 @@ type Server struct {
 func (s *Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 	timer := time.Now()
 
+	fmt.Println()
+	fmt.Println("Request received at", timer.Format("15:04:05"), "from", r.RemoteAddr)
+
 	start, end, err := server.ParseCoordinates(r.URL.Path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		fmt.Println(" > failed to parse coordinates")
+		return
+	}
+
+	fmt.Println(" > start:", start)
+	fmt.Println(" > end:", end)
+
+	if !s.g.InBounds(start) || !s.g.InBounds(end) {
+		http.Error(w, "Coordinates not in bounds of map", http.StatusBadRequest)
+		fmt.Println(" > coordinates not in bounds of map")
 		return
 	}
 
 	shortestPath, err := pathfinding.ShortestPath(s.g, s.kdTree, start, end)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
+		fmt.Fprintf(os.Stderr, "> error: %s\n", err)
 		http.Error(w, "Failed to find path", http.StatusBadRequest)
 		return
 	}
@@ -39,10 +52,6 @@ func (s *Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 	// assuming an average walking pace of 5km/h = 1.388 m/s
 	duration := distance * 0.72
 
-	fmt.Println()
-	fmt.Println("Request received at", timer.Format("15:04:05"), "from", r.RemoteAddr)
-	fmt.Println(" > start:", start)
-	fmt.Println(" > end:", end)
 	fmt.Println(" > distance:", distance, "m")
 	fmt.Println(" > duration:", duration, "s")
 	fmt.Println(" > compute duration:", time.Since(timer).Milliseconds(), "ms")

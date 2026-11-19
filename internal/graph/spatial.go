@@ -142,3 +142,8 @@ func (root *KDNode) NearestTo(g *Graph, target geo.Point) int {
 //
 // 	return nearestId
 // }
+
+func (g Graph) InBounds(p geo.Point) bool {
+	return g.Bounds.Min.Lat <= p.Lat && p.Lat <= g.Bounds.Max.Lat &&
+		g.Bounds.Min.Lon <= p.Lon && p.Lon <= g.Bounds.Max.Lon
+}
