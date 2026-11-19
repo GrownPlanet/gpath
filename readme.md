@@ -1,6 +1,6 @@
 # GPath
 
-A simple pathfinding algorithm based on OSM-data written in go.
+A simple pathfinding algorithm based A* with OSM-data written in go.
 
 ## How to run
 
