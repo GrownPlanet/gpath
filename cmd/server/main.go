@@ -40,7 +40,7 @@ func (s *Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 	duration := distance * 0.72
 
 	fmt.Println()
-	fmt.Println("calculated path")
+	fmt.Println("Request received at", timer.Format("15:04:05"), "from", r.RemoteAddr)
 	fmt.Println(" > start:", start)
 	fmt.Println(" > end:", end)
 	fmt.Println(" > distance:", distance, "m")
