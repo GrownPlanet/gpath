@@ -43,7 +43,7 @@ func (s *Server) coordinateHandler(w http.ResponseWriter, r *http.Request) {
 
 	shortestPath, err := pathfinding.ShortestPath(s.g, s.kdTree, start, end)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "> error: %s\n", err)
+		fmt.Fprintf(os.Stderr, " > error: %s\n", err)
 		http.Error(w, "Failed to find path", http.StatusBadRequest)
 		return
 	}
